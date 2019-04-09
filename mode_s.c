@@ -1138,8 +1138,13 @@ static void decodeESTargetStatus(struct modesMessage *mm, int check_imf)
         mm->accuracy.sil_type = SIL_UNKNOWN;
 
         // 47-51: reserved
-
+        
         // 52-53: TCAS status
+        /*
+        two individual 1-bit length data elements that each indicate the status of a specific system or function on the transmitting aircraft.. 
+        ME bit 52: TCAS/ACAS operational | not operational
+        ME bit 53: Resolution Advisory active | not active
+        */
         switch (getbits(me, 52, 53)) {
         case 1:
             mm->nav.modes_valid = 1;
