@@ -1139,27 +1139,17 @@ static void decodeESTargetStatus(struct modesMessage *mm, int check_imf)
 
         // 47-51: reserved
 
-        // 52-53: TCAS status
-        switch (getbits(me, 52, 53)) {
-        case 1:
-            mm->nav.modes_valid = 1;
-            // no tcas
-            break;
-        case 2:
-        case 3:
+        // 52-53: Capability/Mode Codes
+        /*
+        see Notes in DO260B 2.2.3.2.7.1.3.17
+        ADS-B does not consider TCAS Operational unless TCAS is in a state which can issue a 
+        Resolution Advisory (RA), Traffic Alert is not sufficient.
+        set NAV_MODE_TCAS if (TCAS is operational/unknown) AND (Resolution Advisory is active)
+        */
+        if (!getbits(me, 52) && getbits(me, 53)) {
             mm->nav.modes_valid = 1;
             mm->nav.modes |= NAV_MODE_TCAS;
-            break;
-        case 0:
-            // assume TCAS if we had any other modes
-            // but don't enable modes just for this
-            mm->nav.modes |= NAV_MODE_TCAS;
-            break;
-        default:
-            // nothing
-            break;
-        }
-
+        }            
 
         // 54-56: emergency/priority
         mm->emergency_valid = 1;
