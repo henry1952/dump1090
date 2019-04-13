@@ -836,6 +836,12 @@ static void decodeESAirborneVelocity(struct modesMessage *mm, int check_imf)
                 }
             }
 
+            if (mm->tas_valid && mm->ias_valid){
+    	        if (mm->ias > (mm->tas + 5))
+    		        mm->ias_valid = 0;      // may be too big
+    		        mm->tas_valid = 0;      // may be too small
+            }
+            
             break;
         }
     }
