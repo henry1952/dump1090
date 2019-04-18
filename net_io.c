@@ -1333,7 +1333,7 @@ char *generateAircraftJson(const char *url_path, int *len) {
 			           	break;
 					}
 				} else {
-					if (a->altitude_baro != 62736) /* 0xF510 */
+					if (a->altitude_baro <= 60000) /* upper limit of CAT A air space */
 						p = safe_snprintf(p, end, ",\"alt_baro\":%d", a->altitude_baro);
 				}
         	}
