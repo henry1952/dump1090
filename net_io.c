@@ -1267,6 +1267,8 @@ static const char *sil_type_enum_string(sil_type_t type)
     }
 }
 
+#define MAX_BARO_ALTITUDE	(60000)	/* feet, FL600 is upper limit of airspace class A */
+
 char *generateAircraftJson(const char *url_path, int *len) {
     uint64_t now = mstime();
     struct aircraft *a;
@@ -1315,7 +1317,7 @@ char *generateAircraftJson(const char *url_path, int *len) {
 					case 0xA4:
 					case 0xA5:
 					case 0xB6:
-						if (a->altitude_baro < 60000) /* below upper limit of airspace CAT A */
+						if (a->altitude_baro < MAX_BARO_ALTITUDE) /* below upper limit of airspace class A */
 			           		p = safe_snprintf(p, end, ",\"alt_baro\":%d", a->altitude_baro);
 			           	break;
 					case 0xA6:
@@ -1333,7 +1335,7 @@ char *generateAircraftJson(const char *url_path, int *len) {
 			           	break;
 					}
 				} else {
-					if (a->altitude_baro <= 60000) /* upper limit of CAT A air space */
+					if (a->altitude_baro <= MAX_BARO_ALTITUDE) /* upper limit of CAT A air space */
 						p = safe_snprintf(p, end, ",\"alt_baro\":%d", a->altitude_baro);
 				}
         	}
