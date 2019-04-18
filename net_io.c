@@ -1306,19 +1306,70 @@ char *generateAircraftJson(const char *url_path, int *len) {
         if (trackDataValid(&a->airground_valid) && a->airground_valid.source >= SOURCE_MODE_S_CHECKED && a->airground == AG_GROUND)
             p = safe_snprintf(p, end, ",\"alt_baro\":\"ground\"");
         else {
-            if (trackDataValid(&a->altitude_baro_valid))
-                p = safe_snprintf(p, end, ",\"alt_baro\":%d", a->altitude_baro);
+            if (trackDataValid(&a->altitude_baro_valid)) {
+				if (a->category != 0) {
+					switch (a->category) {
+					case 0xA1:
+					case 0xA2:
+					case 0xA3:
+					case 0xA4:
+					case 0xA5:
+					case 0xB6:
+						if (a->altitude_baro < 60000) /* below upper limit of airspace CAT A */
+			           		p = safe_snprintf(p, end, ",\"alt_baro\":%d", a->altitude_baro);
+			           	break;
+					case 0xA6:
+					case 0xB7:
+		           		p = safe_snprintf(p, end, ",\"alt_baro\":%d", a->altitude_baro);
+			           	break;
+					case 0xA7:
+						if (a->altitude_baro < 21000) /* above air too thin for rotors */
+		           			p = safe_snprintf(p, end, ",\"alt_baro\":%d", a->altitude_baro);
+			           	break;
+					case 0xB1:
+					case 0xB4:
+						if (a->altitude_baro < 14000) /* above needs oxygen or pressure cabin */
+		           		p = safe_snprintf(p, end, ",\"alt_baro\":%d", a->altitude_baro);
+			           	break;
+					}
+				} else {
+					if (a->altitude_baro != 62736) /* 0xF510 */
+						p = safe_snprintf(p, end, ",\"alt_baro\":%d", a->altitude_baro);
+				}
+        	}
             if (trackDataValid(&a->altitude_geom_valid))
                 p = safe_snprintf(p, end, ",\"alt_geom\":%d", a->altitude_geom);
         }
         if (trackDataValid(&a->gs_valid))
             p = safe_snprintf(p, end, ",\"gs\":%.1f", a->gs);
-        if (trackDataValid(&a->ias_valid))
-            p = safe_snprintf(p, end, ",\"ias\":%u", a->ias);
-        if (trackDataValid(&a->tas_valid))
-            p = safe_snprintf(p, end, ",\"tas\":%u", a->tas);
-        if (trackDataValid(&a->mach_valid))
-            p = safe_snprintf(p, end, ",\"mach\":%.3f", a->mach);
+        if (trackDataValid(&a->ias_valid) && trackDataValid(&a->tas_valid)) {
+        	if (a->ias < (a->tas + a->tas*5/100)) {
+				p = safe_snprintf(p, end, ",\"ias\":%u", a->ias);
+				p = safe_snprintf(p, end, ",\"tas\":%u", a->tas);
+        	}
+        } else {
+			if (trackDataValid(&a->ias_valid))
+				if (a->ias < 500)
+					p = safe_snprintf(p, end, ",\"ias\":%u", a->ias);
+				else
+					if ((a->category != 0) && (a->category == 0xA6))	/* or B7 */
+						p = safe_snprintf(p, end, ",\"ias\":%u", a->ias);
+					/* else most probably invalid */
+			if (trackDataValid(&a->tas_valid))
+				p = safe_snprintf(p, end, ",\"tas\":%u", a->tas);
+        }
+        if (trackDataValid(&a->mach_valid)) {
+            trackDataValid(&a->altitude_baro_valid) 
+        	if (a->mach >= 1.0) {
+                if ((a->altitude_baro > 30000)) { /* prohibited < FL330 */
+                        p = safe_snprintf(p, end, ",\"mach\":%.3f", a->mach);
+                } else {
+                    p = safe_snprintf(p, end, ",\"mach\":%.3f", a->mach);
+                }
+            } else {
+                p = safe_snprintf(p, end, ",\"mach\":%.3f", a->mach);
+            }
+        }
         if (trackDataValid(&a->track_valid))
             p = safe_snprintf(p, end, ",\"track\":%.1f", a->track);
         if (trackDataValid(&a->track_rate_valid))
