@@ -1389,19 +1389,24 @@ char *generateAircraftJson(const char *url_path, int *len) {
 						p = safe_snprintf(p, end, ",\"ias\":%u", a->ias);
 					/* else most probably invalid */
 				}
-			}
-			if (trackDataValid(&a->tas_valid))
-				p = safe_snprintf(p, end, ",\"tas\":%u", a->tas);
-                }
-        }
+	 		}
+		}
+		if (trackDataValid(&a->tas_valid))
+			/*
+			 * TAS vs Mach could be checked using simplified formula (2)
+			 *	http://walter.bislins.ch/aviatik/index.asp?page=True+airspeed
+			 * with a0=661kts and T=258°K 
+			 */
+			p = safe_snprintf(p, end, ",\"tas\":%u", a->tas);
         if (trackDataValid(&a->mach_valid)) {
-            trackDataValid(&a->altitude_baro_valid) 
-        	if (a->mach >= 1.0) {
-                if ((a->altitude_baro > 30000)) { /* prohibited < FL330 */
-                        p = safe_snprintf(p, end, ",\"mach\":%.3f", a->mach);
-                } else {
-                    p = safe_snprintf(p, end, ",\"mach\":%.3f", a->mach);
-                }
+            if (trackDataValid(&a->altitude_baro_valid)) {
+        		if (a->mach >= 1.0) {
+					if ((a->altitude_baro > 30000)) { /* prohibited < FL330 */
+						p = safe_snprintf(p, end, ",\"mach\":%.3f", a->mach);
+					} 
+				} else {
+					p = safe_snprintf(p, end, ",\"mach\":%.3f", a->mach);
+				}
             } else {
                 p = safe_snprintf(p, end, ",\"mach\":%.3f", a->mach);
             }
