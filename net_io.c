@@ -1350,15 +1350,49 @@ char *generateAircraftJson(const char *url_path, int *len) {
 				p = safe_snprintf(p, end, ",\"tas\":%u", a->tas);
         	}
         } else {
-			if (trackDataValid(&a->ias_valid))
-				if (a->ias < 500)
-					p = safe_snprintf(p, end, ",\"ias\":%u", a->ias);
-				else
-					if ((a->category != 0) && (a->category == 0xA6))	/* or B7 */
+			if (trackDataValid(&a->ias_valid)) {
+				if (a->category != 0) {
+					switch (a->category) {
+					case 0xA1:
+					case 0xA2:
+					case 0xA3:
+					case 0xA4:
+					case 0xA5:
+						if (a->ias < 500)
+							p = safe_snprintf(p, end, ",\"ias\":%u", a->ias);
+						break;
+					case 0xA6:
+					case 0xB7:
+						p = safe_snprintf(p, end, ",\"ias\":%u", a->ias);
+						break;
+					case 0xA7:
+						if (a->ias < 300)
+							p = safe_snprintf(p, end, ",\"ias\":%u", a->ias);
+							break;
+					case 0xB1:
+					case 0xB4:
+						if (a->ias < 150)
+							p = safe_snprintf(p, end, ",\"ias\":%u", a->ias);
+							break;
+					case 0xB2: /* Zeppelin NT Maximum speed: 78 mph */
+						if (a->ias < 100)
+							p = safe_snprintf(p, end, ",\"ias\":%u", a->ias);
+							break;
+						break;
+					case 0xB6:
+						if (a->ias < 300)
+							p = safe_snprintf(p, end, ",\"ias\":%u", a->ias);
+							break;
+					}
+				} else {
+					if (a->ias < 500)
 						p = safe_snprintf(p, end, ",\"ias\":%u", a->ias);
 					/* else most probably invalid */
+				}
+			}
 			if (trackDataValid(&a->tas_valid))
 				p = safe_snprintf(p, end, ",\"tas\":%u", a->tas);
+                }
         }
         if (trackDataValid(&a->mach_valid)) {
             trackDataValid(&a->altitude_baro_valid) 
